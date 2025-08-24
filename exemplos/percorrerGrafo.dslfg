@@ -1,0 +1,19 @@
+função buscaTeste grafoParametro, verticeInicial, acao
+	vertices = obterTodosOsVerticesDe grafoParametro
+	iteradorDeVertices = obterIteradorDe vertices
+	statusDoIterador = existeProximoItemEm iteradorDeVertices
+	enquanto statusDoIterador == verdadeiro
+		vertice = obterProximoItemDe iteradorDeVertices
+		executar acao fornecendo vertice
+		statusDoIterador = existeProximoItemEm iteradorDeVertices
+
+digrafo exemplo
+	a ligadoCom b comPeso 10
+	a ligadoCom c comPeso 5
+	b ligadoCom c comPeso 3
+	b ligadoCom d comPeso 1
+	c ligadoCom b comPeso 2
+	c ligadoCom d comPeso 2
+
+percorrerGrafo exemplo utilizando buscaTeste iniciandoEm a
+	mostrar vertice
