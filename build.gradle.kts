@@ -3,11 +3,23 @@ plugins {
     kotlin("jvm") version "2.2.10"
     antlr
     application
+    id ("io.gitlab.arturbosch.detekt") version "1.23.8"
 }
 
 repositories {
     mavenCentral()
 }
+
+buildscript {
+    repositories {
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.8")
+    }
+}
+
+apply(plugin = "io.gitlab.arturbosch.detekt")
 
 dependencies {
     implementation("org.antlr:antlr4:4.1")
