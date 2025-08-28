@@ -222,3 +222,11 @@ gradle-app.setting
 *.hprof
 
 # End of https://www.toptal.com/developers/gitignore/api/java,kotlin,intellij,windows,linux,gradle
+/.idea/.gitignore
+/.idea/compiler.xml
+/.idea/modules/dslfg.main.iml
+/.idea/modules/dslfg.test.iml
+/.idea/kotlinc.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/vcs.xml

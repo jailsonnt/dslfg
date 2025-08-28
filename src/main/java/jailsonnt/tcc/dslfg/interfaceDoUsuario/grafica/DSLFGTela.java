@@ -11,11 +11,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URL;
 
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
+import javax.swing.*;
 
 /**
  *
@@ -63,7 +61,7 @@ public class DSLFGTela extends javax.swing.JFrame implements InterfaceDoUsuario 
         pnlAcoes.setToolTipText("Ações");
 
         btnSalvar.setForeground(new java.awt.Color(240, 240, 240));
-        btnSalvar.setIcon(new javax.swing.ImageIcon(getClass().getResource("icones/disquetePequeno.png")));
+        btnSalvar.setIcon(criarImageIcon("disquetePequeno.png"));
         btnSalvar.setToolTipText("Salvar");
         btnSalvar.setBorder(null);
         btnSalvar.setName("btnSalvar");
@@ -73,7 +71,7 @@ public class DSLFGTela extends javax.swing.JFrame implements InterfaceDoUsuario 
             }
         });
 
-        btnSalvarTodos.setIcon(new javax.swing.ImageIcon(getClass().getResource("icones/Save allpequeno.png"))); 
+        btnSalvarTodos.setIcon(criarImageIcon("Save allpequeno.png"));
         btnSalvarTodos.setToolTipText("Salvar Todos");
         btnSalvarTodos.setBorder(null);
         btnSalvarTodos.setName("btnSalvarTodos");
@@ -83,7 +81,7 @@ public class DSLFGTela extends javax.swing.JFrame implements InterfaceDoUsuario 
             }
         });
 
-        btnNovoCod.setIcon(new javax.swing.ImageIcon(getClass().getResource("icones/File Open-01pequeno.png"))); 
+        btnNovoCod.setIcon(criarImageIcon("File Open-01pequeno.png"));
         btnNovoCod.setToolTipText("Novo algoritmo");
         btnNovoCod.setBorder(null);
         btnNovoCod.addActionListener(new java.awt.event.ActionListener() {
@@ -93,7 +91,7 @@ public class DSLFGTela extends javax.swing.JFrame implements InterfaceDoUsuario 
         });
 
         btnExecutar.setForeground(new java.awt.Color(240, 240, 240));
-        btnExecutar.setIcon(new javax.swing.ImageIcon(getClass().getResource("icones/player_playpequeno.png"))); 
+        btnExecutar.setIcon(criarImageIcon("player_playpequeno.png"));
         btnExecutar.setToolTipText("Executar");
         btnExecutar.setBorder(null);
         btnExecutar.setName("btnExecutar");
@@ -205,6 +203,15 @@ public class DSLFGTela extends javax.swing.JFrame implements InterfaceDoUsuario 
         );
 
         pack();
+    }
+
+    private ImageIcon criarImageIcon(String fileName) {
+        String path = "/icones/" + fileName;
+        URL location = getClass().getResource(path);
+        if (location == null) {
+            throw new IllegalArgumentException("Recurso não encontrado: " + path);
+        }
+        return new ImageIcon(location);
     }
 
     private void btnFecharPnlAcoesMouseClicked(java.awt.event.MouseEvent evt) {
