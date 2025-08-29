@@ -1,5 +1,6 @@
 package jailsonnt.tcc.dslfg;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import jailsonnt.tcc.dslfg.execucao.Objeto;
@@ -13,7 +14,7 @@ import jailsonnt.tcc.dslfg.execucao.objetos.grafos.Aresta;
 import jailsonnt.tcc.dslfg.execucao.objetos.grafos.Grafo;
 import jailsonnt.tcc.dslfg.execucao.objetos.grafos.Vertice;
 import jailsonnt.tcc.dslfg.interfaceDoUsuario.AmbienteDeExecucaoDSLFG;
-import jailsonnt.tcc.dslfg.interfaceDoUsuario.teste.TesteDasSaidas;
+import jailsonnt.tcc.dslfg.util.OutputTestHelper;
 
 import java.io.File;
 import java.util.HashMap;
@@ -24,7 +25,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
-class DSLFGTeste {
+class DSLFGIntegrationTest {
 	private final Map<String, Map<String, Objeto>> respostasParaTesteDeDespejo = new HashMap<>();
 
 	@BeforeEach
@@ -46,9 +47,9 @@ class DSLFGTeste {
 				File[] arquivosDSLFG = subpasta.listFiles((dir, name) -> name.endsWith(".dslfg"));
 				if (arquivosDSLFG != null) {
 					for (File arquivoDSLFG : arquivosDSLFG) {
-						TesteDasSaidas.definirAlgoritmoAtual(arquivoDSLFG.getPath());
+						OutputTestHelper.setCurrentAlgorithm(arquivoDSLFG.getPath());
 						AmbienteDeExecucaoDSLFG dsl = AmbienteDeExecucaoDSLFG.obterInstância();
-						TesteDasSaidas consoleTeste = new TesteDasSaidas();
+						OutputTestHelper consoleTeste = new OutputTestHelper();
 						dsl.fixarInterfaceDoUsuario(consoleTeste);
 						dsl.carregarPrograma(arquivoDSLFG);
 						try {
@@ -56,7 +57,7 @@ class DSLFGTeste {
 						} catch (ExcecaoEmTempoDeExecucao e) {
 							// Erros de execução podem ser esperados em alguns testes
 						}
-						consoleTeste.executarTeste();
+						consoleTeste.runTest();
 						testesDeDespejo(arquivoDSLFG.getPath(), dsl.obterDespejo());
 					}
 				}
@@ -68,11 +69,11 @@ class DSLFGTeste {
 		Map<String, Objeto> despejosDoProgramaProcurado = respostasParaTesteDeDespejo.get(nomeDoAlgoritmoAtual);
 		if (despejosDoProgramaProcurado != null) {
 			try {
-				assertEquals(despejosDoProgramaProcurado, listaDeDespejoAtual);
+				Assertions.assertEquals(despejosDoProgramaProcurado, listaDeDespejoAtual);
 				System.out.println(nomeDoAlgoritmoAtual + " (despejo) executado com sucesso");
 			} catch (AssertionError e) {
 				System.out.println(nomeDoAlgoritmoAtual + " (despejo) executado com falha:\n\n" + e);
-				fail(e);
+				Assertions.fail(e);
 			}
 		}
 	}

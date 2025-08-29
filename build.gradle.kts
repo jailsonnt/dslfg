@@ -10,6 +10,33 @@ repositories {
     mavenCentral()
 }
 
+val generatedSourcesDir = layout.buildDirectory.dir("generated-src/antlr/main").get()
+val generatedTestSourcesDir = layout.buildDirectory.dir("generated-src/antlr/test").get()
+val generatedIntegrationTestSourcesDir = layout.buildDirectory.dir("generated-src/antlr/integrationTest").get()
+
+
+val integrationTest by sourceSets.creating {
+    java.srcDir("src/integrationTest/java")
+    kotlin.srcDir("src/integrationTest/kotlin")
+    resources.srcDir("src/integrationTest/resources")
+    compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+    runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+    java.srcDir(generatedIntegrationTestSourcesDir)
+}
+
+configurations {
+    val testImplementation by getting
+    val testRuntimeOnly by getting
+
+    val integrationTestImplementation by getting {
+        extendsFrom(testImplementation)
+    }
+    val integrationTestRuntimeOnly by getting {
+        extendsFrom(testRuntimeOnly)
+    }
+}
+
+
 buildscript {
     repositories {
         gradlePluginPortal()
@@ -49,17 +76,29 @@ tasks.test {
     failOnNoDiscoveredTests = false
 }
 
-val generatedSourcesDir = layout.buildDirectory.dir("generated-src/antlr/main").get()
-val generatedTestSourcesDir = layout.buildDirectory.dir("generated-src/antlr/test").get()
+val integrationTestTask by tasks.registering(Test::class) {
+    description = "Runs integration tests."
+    group = "verification"
+
+    testClassesDirs = integrationTest.output.classesDirs
+    classpath = integrationTest.runtimeClasspath
+    shouldRunAfter(tasks.test)
+    useJUnitPlatform()
+}
+
+tasks.check {
+    dependsOn(integrationTestTask)
+}
+
 
 tasks.generateGrammarSource {
     maxHeapSize = "64m"
     arguments = arguments + listOf(
         "-visitor",
         "-package", "jailsonnt.tcc.dslfg.antlr",
-        "-lib", "src/main/antlr/jailsonnt/tcc/dslfg/antlr"
+        "-lib", "src/main/antlr/jailsonnt/tcc.dslfg.antlr"
     )
-    outputDirectory = file("${generatedSourcesDir}/jailsonnt/tcc/dslfg/antlr")
+    outputDirectory = file("${generatedSourcesDir}/jailsonnt/tcc.dslfg/antlr")
 }
 
 sourceSets {
@@ -78,6 +117,11 @@ sourceSets {
 tasks.named("compileTestKotlin") {
     dependsOn(tasks.named("generateTestGrammarSource"))
 }
+
+tasks.named("compileIntegrationTestKotlin") {
+    dependsOn(tasks.named("generateIntegrationTestGrammarSource"))
+}
+
 
 tasks.test {
     dependsOn(tasks.named("generateTestGrammarSource"))
