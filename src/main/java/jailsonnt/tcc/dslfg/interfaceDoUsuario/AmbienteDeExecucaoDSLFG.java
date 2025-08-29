@@ -47,15 +47,14 @@ public class AmbienteDeExecucaoDSLFG {
 	}
 	
 	public void carregarPrograma(File arquivoParaExecutar) {
-		try {
-			List<String> linhasDoArquivo = IOUtils.readLines(new FileInputStream(arquivoParaExecutar));
-			programaEmTexto = StringUtils.join(linhasDoArquivo, "\n");
-			rodarAnalisadores();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+        List<String> linhasDoArquivo = null;
+        try {
+            linhasDoArquivo = IOUtils.readLines(new FileInputStream(arquivoParaExecutar));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        programaEmTexto = StringUtils.join(linhasDoArquivo, "\n");
+		rodarAnalisadores();
 	}
 
 	public void carregarPrograma(String texto) {

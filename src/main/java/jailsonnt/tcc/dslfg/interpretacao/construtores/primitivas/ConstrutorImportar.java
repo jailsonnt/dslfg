@@ -56,10 +56,12 @@ public class ConstrutorImportar {
 
 	private String obterProgramaEmTexto() {
 		List<String> linhasDoArquivo = null;
-		try {
-			linhasDoArquivo = IOUtils.readLines(new FileInputStream(new File(caminho)));
-		} catch (FileNotFoundException e) {} catch (IOException e) {}
-		return StringUtils.join(linhasDoArquivo, "\n");
+        try {
+            linhasDoArquivo = IOUtils.readLines(new FileInputStream(new File(caminho)));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return StringUtils.join(linhasDoArquivo, "\n");
 	}
 
 	private boolean testarArquivo() {
