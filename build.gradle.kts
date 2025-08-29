@@ -27,12 +27,10 @@ dependencies {
     implementation("org.apache.commons:commons-lang3:3.18.0")
     implementation(files("lib/rsyntaxtextarea-2.0.4.1.jar"))
 
-    // Dependências de teste atualizadas
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
     testImplementation("org.mockito:mockito-core:5.11.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
-    // Adiciona o JUnit Platform Launcher para o tempo de execução dos testes
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -47,7 +45,6 @@ application {
 }
 
 tasks.test {
-    // Usa a plataforma JUnit 5 para executar os testes
     useJUnitPlatform()
     failOnNoDiscoveredTests = false
 }
