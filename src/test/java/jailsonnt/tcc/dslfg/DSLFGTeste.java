@@ -1,6 +1,7 @@
 package jailsonnt.tcc.dslfg;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import jailsonnt.tcc.dslfg.execucao.Objeto;
 import jailsonnt.tcc.dslfg.execucao.excessoes.ExcecaoEmTempoDeExecucao;
 import jailsonnt.tcc.dslfg.execucao.objetos.Booleano;
@@ -20,50 +21,60 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class DSLFGTeste {
-	Map<String, Map<String, Objeto>> respostasParaTesteDeDespejo;
-	
-	public DSLFGTeste() {
-		respostasParaTesteDeDespejo = new HashMap<String, Map<String,Objeto>>();
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
+class DSLFGTeste {
+	private final Map<String, Map<String, Objeto>> respostasParaTesteDeDespejo = new HashMap<>();
+
+	@BeforeEach
+	void setUp() {
 		carregaRespostasParaTesteDeDespejo();
 	}
 
-	public static void main(String[] args) {
-		File pastaExemplos = new File(args[0]);
-		int numeroDePastas = pastaExemplos.list().length;
-		for (int indexDaPastaAtual = 0; indexDaPastaAtual<numeroDePastas;indexDaPastaAtual++) {
-			File subpastaDeExemplos = new File(pastaExemplos.toString()+"\\"+pastaExemplos.list()[indexDaPastaAtual]);
-			int numeroDeArquivos = subpastaDeExemplos.listFiles().length;
-			for (int indexDoArquivoAtual = 0; indexDoArquivoAtual<numeroDeArquivos;indexDoArquivoAtual++) {
-				File arquivoDSLFG = subpastaDeExemplos.listFiles()[indexDoArquivoAtual];
-				TesteDasSaidas.definirAlgoritmoAtual(arquivoDSLFG.toString());
-				AmbienteDeExecucaoDSLFG dsl = AmbienteDeExecucaoDSLFG.obterInstância();
-				TesteDasSaidas consoleTeste = new TesteDasSaidas();
-				dsl.fixarInterfaceDoUsuario(consoleTeste);
-				dsl.carregarPrograma(arquivoDSLFG);
-				try {
-					dsl.executar();
-				} catch (ExcecaoEmTempoDeExecucao e) {
+	@Test
+	void executarTestesDeSaida() {
+		File pastaExemplos = new File("exemplos"); // Diretório base dos exemplos
+		if (!pastaExemplos.exists() || !pastaExemplos.isDirectory()) {
+			System.err.println("Diretório de exemplos não encontrado: " + pastaExemplos.getAbsolutePath());
+			return;
+		}
+
+		File[] subpastas = pastaExemplos.listFiles(File::isDirectory);
+		if (subpastas != null) {
+			for (File subpasta : subpastas) {
+				File[] arquivosDSLFG = subpasta.listFiles((dir, name) -> name.endsWith(".dslfg"));
+				if (arquivosDSLFG != null) {
+					for (File arquivoDSLFG : arquivosDSLFG) {
+						TesteDasSaidas.definirAlgoritmoAtual(arquivoDSLFG.getPath());
+						AmbienteDeExecucaoDSLFG dsl = AmbienteDeExecucaoDSLFG.obterInstância();
+						TesteDasSaidas consoleTeste = new TesteDasSaidas();
+						dsl.fixarInterfaceDoUsuario(consoleTeste);
+						dsl.carregarPrograma(arquivoDSLFG);
+						try {
+							dsl.executar();
+						} catch (ExcecaoEmTempoDeExecucao e) {
+							// Erros de execução podem ser esperados em alguns testes
+						}
+						consoleTeste.executarTeste();
+						testesDeDespejo(arquivoDSLFG.getPath(), dsl.obterDespejo());
+					}
 				}
-				consoleTeste.executarTeste();
-				new DSLFGTeste().testesDeDespejo(arquivoDSLFG.toString(), dsl.obterDespejo());
 			}
 		}
 	}
-	
-	public void testesDeDespejo (String nomeDoAlgoritmoAtual, Map<String, Objeto> listaDeDespejoAtual){
+
+	void testesDeDespejo(String nomeDoAlgoritmoAtual, Map<String, Objeto> listaDeDespejoAtual) {
 		Map<String, Objeto> despejosDoProgramaProcurado = respostasParaTesteDeDespejo.get(nomeDoAlgoritmoAtual);
-		try{
-			if (despejosDoProgramaProcurado != null){
+		if (despejosDoProgramaProcurado != null) {
+			try {
 				assertEquals(despejosDoProgramaProcurado, listaDeDespejoAtual);
-				System.out.println(nomeDoAlgoritmoAtual+" executado com sucesso");
+				System.out.println(nomeDoAlgoritmoAtual + " (despejo) executado com sucesso");
+			} catch (AssertionError e) {
+				System.out.println(nomeDoAlgoritmoAtual + " (despejo) executado com falha:\n\n" + e);
+				fail(e);
 			}
-		}catch(org.junit.ComparisonFailure excessãoNoAssert){
-			System.out.println(nomeDoAlgoritmoAtual+" executado com falha:\n\n"+ excessãoNoAssert);
-		}catch(java.lang.AssertionError excessãoNoAssert){
-			System.out.println(nomeDoAlgoritmoAtual+" executado com falha:\n\n"+ excessãoNoAssert);
 		}
-		
 	}
 
 	private void carregaRespostasParaTesteDeDespejo() {
@@ -104,11 +115,10 @@ public class DSLFGTeste {
 		adicionarTesteAlgoritmoObterPropriedadeDePropriedadeInexistente();
 		adicionarTesteObterVerticesAdjacentes();
 	}
-	
+
 	private void adicionarTesteAlgoritmoObterPropriedadeDePropriedadeInexistente() {
-		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
+		Map<String, Objeto> novaListaDeDespejo = new HashMap<>();
 		novaListaDeDespejo.put("valor", new Booleano(false));
-		
 		respostasParaTesteDeDespejo.put("exemplos\\funcoes\\obterPropriedadeDePropriedadeInexistente.dslfg", novaListaDeDespejo);
 	}
 
@@ -116,20 +126,16 @@ public class DSLFGTeste {
 		Conjunto conjunto = new Conjunto();
 		conjunto.adicionarElemento(new Numero(1.0));
 		conjunto.adicionarElemento(new Numero(3.0));
-		
-		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
+		Map<String, Objeto> novaListaDeDespejo = new HashMap<>();
 		novaListaDeDespejo.put("conjunto", conjunto);
-		
 		respostasParaTesteDeDespejo.put("exemplos\\operadores\\diferencaDeConjuntos.dslfg", novaListaDeDespejo);
 	}
 
 	private void adicionarTesteAlgoritmoInterseccao() {
 		Conjunto conjunto = new Conjunto();
 		conjunto.adicionarElemento(new Numero(0.0));
-		
-		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
+		Map<String, Objeto> novaListaDeDespejo = new HashMap<>();
 		novaListaDeDespejo.put("conjunto", conjunto);
-		
 		respostasParaTesteDeDespejo.put("exemplos\\operadores\\interseccao.dslfg", novaListaDeDespejo);
 	}
 
@@ -137,35 +143,32 @@ public class DSLFGTeste {
 		Conjunto conjunto = new Conjunto();
 		conjunto.adicionarElemento(new Numero(0.0));
 		conjunto.adicionarElemento(new Numero(1.0));
-		
-		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
+		Map<String, Objeto> novaListaDeDespejo = new HashMap<>();
 		novaListaDeDespejo.put("conjunto", conjunto);
-		
 		respostasParaTesteDeDespejo.put("exemplos\\operadores\\uniao.dslfg", novaListaDeDespejo);
-	
 	}
 
 	private void adicionarTesteAlgoritmoNaoEUmElementoDe() {
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("x", new Booleano(false));
 		novaListaDeDespejo.put("y", new Booleano(true));
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\operadores\\naoEUmElementoDe.dslfg", novaListaDeDespejo);
 	}
-	
+
 	private void adicionarTesteAlgoritmoEUmElementoDe() {
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("x", new Booleano(true));
 		novaListaDeDespejo.put("y", new Booleano(false));
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\operadores\\eUmElementoDe.dslfg", novaListaDeDespejo);
 	}
-	
+
 	private void adicionarTesteAlgoritmoSubconjunto() {
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("x", new Booleano(true));
 		novaListaDeDespejo.put("y", new Booleano(false));
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\operadores\\subconjunto.dslfg", novaListaDeDespejo);
 	}
 
@@ -173,67 +176,67 @@ public class DSLFGTeste {
 		Numero a = new Numero(1);
 		Numero b = new Numero(0);
 		Numero c = new Numero(0);
-		
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("a", a);
 		novaListaDeDespejo.put("b", b);
 		novaListaDeDespejo.put("c", c);
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\operadores\\maior.dslfg", novaListaDeDespejo);
 	}
 	private void adicionarTesteAlgoritmoMaiorOuIgual() {
 		Numero a = new Numero(1);
 		Numero b = new Numero(1);
 		Numero c = new Numero(0);
-		
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("a", a);
 		novaListaDeDespejo.put("b", b);
 		novaListaDeDespejo.put("c", c);
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\operadores\\maiorOuIgual.dslfg", novaListaDeDespejo);
 	}
 
 	private void adicionarTesteAlgoritmoDiv() {
 		Numero numero = new Numero(2.0);
-		
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("x", numero);
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\operadores\\div.dslfg", novaListaDeDespejo);
 	}
 
 	private void adicionarTesteAlgoritmoMod() {
 		Numero numero = new Numero(1.0);
-		
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("x", numero);
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\operadores\\mod.dslfg", novaListaDeDespejo);
 	}
 
 	private void adicionarTesteAlgoritmoDivisao() {
 		Numero numero = new Numero(1.25);
-		
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("x", numero);
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\operadores\\divisao.dslfg", novaListaDeDespejo);
 	}
 
 	private void adicionarTesteAlgoritmoMultiplicacao() {
 		Numero numero = new Numero(20.0);
-		
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("x", numero);
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\operadores\\multiplicacao.dslfg", novaListaDeDespejo);
 	}
 
 	private void adicionarTesteAlgoritmoSubtracao() {
 		Numero numero = new Numero(1.0);
 		Texto resultado = new Texto("retirar daqui");
-		
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("x", numero);
 		novaListaDeDespejo.put("resultado", resultado);
@@ -244,12 +247,12 @@ public class DSLFGTeste {
 		Numero a = new Numero(0);
 		Numero b = new Numero(0);
 		Numero c = new Numero(1);
-		
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("a", a);
 		novaListaDeDespejo.put("b", b);
 		novaListaDeDespejo.put("c", c);
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\operadores\\menor.dslfg", novaListaDeDespejo);
 	}
 
@@ -257,22 +260,22 @@ public class DSLFGTeste {
 		Numero a = new Numero(0);
 		Numero b = new Numero(1);
 		Numero c = new Numero(1);
-		
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("a", a);
 		novaListaDeDespejo.put("b", b);
 		novaListaDeDespejo.put("c", c);
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\operadores\\menorOuIgual.dslfg", novaListaDeDespejo);
-		
+
 	}
 
 	private void adicionarTesteAlgoritmosomaEAtribuicaoSimples() {
 		Numero numero = new Numero(9.0);
-		
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("x", numero);
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\operadores\\somaEAtribuicaoSimples.dslfg", novaListaDeDespejo);
 	}
 
@@ -287,7 +290,7 @@ public class DSLFGTeste {
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("conjuntoEsperado1", conjuntoEsperado1);
 		novaListaDeDespejo.put("conjuntoEsperado2", conjuntoEsperado2);
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\funcoes\\OperadorLogicoDiferente.dslfg", novaListaDeDespejo);
 	}
 
@@ -302,14 +305,14 @@ public class DSLFGTeste {
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("conjuntoEsperado1", conjuntoEsperado1);
 		novaListaDeDespejo.put("conjuntoEsperado2", conjuntoEsperado2);
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\funcoes\\OperadorLogicoIgual.dslfg", novaListaDeDespejo);
 	}
 
 	private void adicionarTesteAlgoritmoTesteDeContextoDois() {
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("x", new Booleano(false));
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\estruturais\\testeDeContextoDois.dslfg", novaListaDeDespejo);
 	}
 
@@ -319,7 +322,7 @@ public class DSLFGTeste {
 		conjunto.adicionarElemento(new Numero(3.0));
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("x", conjunto);
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\estruturais\\testeDeContexto.dslfg", novaListaDeDespejo);
 	}
 
@@ -327,7 +330,7 @@ public class DSLFGTeste {
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("valorMaximo", new Constante("numeroMaximo"));
 		novaListaDeDespejo.put("valorMinimo", new Constante("numeroMinimo"));
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\funcoes\\constantes.dslfg", novaListaDeDespejo);
 	}
 
@@ -343,7 +346,7 @@ public class DSLFGTeste {
 		vertices.add(BalnearioCamboriu);
 		Vertice Brusque = new Vertice("Brusque");
 		vertices.add(Brusque);
-		
+
 		Set<Aresta> arestas = new HashSet<Aresta>();
 		Aresta arestaNavegantesItajai = new Aresta(Navegantes, Itajai);
 		arestaNavegantesItajai.definirPeso(2.0);
@@ -354,16 +357,16 @@ public class DSLFGTeste {
 		Aresta arestaItajaiBrusque = new Aresta(Itajai, Brusque);
 		arestaItajaiBrusque.definirPeso(5.0);
 		arestas.add(arestaItajaiBrusque);
-		
+
 		Grafo grafoOriginal = new Grafo("grafoOriginal", vertices, arestas,"digrafo");
 		Grafo grafoCopia = new Grafo("grafoOriginal", vertices, arestas,"digrafo");
-		
-		
+
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("grafoOriginal", grafoOriginal);
 		novaListaDeDespejo.put("grafoCopia", grafoCopia);
 		respostasParaTesteDeDespejo.put("exemplos\\funcoes\\funcaoCopiarGrafo.dslfg", novaListaDeDespejo);
-		
+
 	}
 
 	private void adicionarTesteAlgoritmoFuncoesObterTodosOsVerticesEObterTodasAsArestas() {
@@ -376,7 +379,7 @@ public class DSLFGTeste {
 		vertices.adicionarElemento(Itajai);
 		vertices.adicionarElemento(BalnearioCamboriu);
 		vertices.adicionarElemento(Brusque);
-		
+
 		Conjunto arestas = new Conjunto();
 		Aresta arestaNavegantesItajai = new Aresta(Navegantes, Itajai);
 		Aresta arestaItajaiBalneario = new Aresta(Itajai, BalnearioCamboriu);
@@ -384,7 +387,7 @@ public class DSLFGTeste {
 		arestas.adicionarElemento(arestaNavegantesItajai);
 		arestas.adicionarElemento(arestaItajaiBalneario);
 		arestas.adicionarElemento(arestaItajaiBrusque);
-		
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("vertices", vertices);
 		novaListaDeDespejo.put("arestas", arestas);
@@ -405,16 +408,16 @@ public class DSLFGTeste {
 	}
 
 	private void adicionarTesteAlgoritmoDefinirPropriedade() {
-		
+
 		Vertice Navegantes = new Vertice("Navegantes");
 		Navegantes.adicionarPropriedade("valor", new Numero(5.0));
-		
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("vertice", Navegantes);
 		respostasParaTesteDeDespejo.put("exemplos\\funcoes\\definirPropriedadeEmVertice.dslfg", novaListaDeDespejo);
 	}
-		
-	
+
+
 
 	private void adicionarTesteAlgoritmoGrafoCompleto() {
 		Set<Vertice> vertices = new HashSet<Vertice>();
@@ -428,7 +431,7 @@ public class DSLFGTeste {
 		vertices.add(BalnearioCamboriu);
 		Vertice Brusque = new Vertice("Brusque");
 		vertices.add(Brusque);
-		
+
 		Set<Aresta> arestas = new HashSet<Aresta>();
 		Aresta arestaNavegantesItajai = new Aresta(Navegantes, Itajai);
 		arestaNavegantesItajai.definirPeso(2.0);
@@ -439,13 +442,13 @@ public class DSLFGTeste {
 		Aresta arestaItajaiBrusque = new Aresta(Itajai, Brusque);
 		arestaItajaiBrusque.definirPeso(5.0);
 		arestas.add(arestaItajaiBrusque);
-		
+
 		Grafo grafo = new Grafo("grafoExemploUmDoLivro", vertices, arestas,"digrafo");
-		
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("grafoExemploUmDoLivro", grafo);
 		respostasParaTesteDeDespejo.put("exemplos\\grafos\\grafoCompleto.dslfg", novaListaDeDespejo);
-		
+
 	}
 
 	private void adicionarTesteAlgoritmoGrafoComPeso() {
@@ -458,7 +461,7 @@ public class DSLFGTeste {
 		vertices.add(BalnearioCamboriu);
 		Vertice Brusque = new Vertice("Brusque");
 		vertices.add(Brusque);
-		
+
 		Set<Aresta> arestas = new HashSet<Aresta>();
 		Aresta arestaNavegantesItajai = new Aresta(Navegantes, Itajai);
 		arestaNavegantesItajai.definirPeso(2.0);
@@ -469,14 +472,14 @@ public class DSLFGTeste {
 		Aresta arestaItajaiBrusque = new Aresta(Itajai, Brusque);
 		arestaItajaiBrusque.definirPeso(5.0);
 		arestas.add(arestaItajaiBrusque);
-		
+
 		Grafo grafo = new Grafo("grafoExemploUmDoLivro", vertices, arestas,"digrafo");
-		
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("grafoExemploUmDoLivro", grafo);
 		respostasParaTesteDeDespejo.put("exemplos\\grafos\\grafoComPeso.dslfg", novaListaDeDespejo);
 	}
-	
+
 	private void adicionarTesteAlgoritmoGrafoSimples() {
 		Set<Vertice> verticesDigrafo = new HashSet<Vertice>();
 		Vertice Navegantes = new Vertice("Navegantes");
@@ -487,7 +490,7 @@ public class DSLFGTeste {
 		verticesDigrafo.add(BalnearioCamboriu);
 		Vertice Brusque = new Vertice("Brusque");
 		verticesDigrafo.add(Brusque);
-		
+
 		Set<Aresta> arestasDigrafo = new HashSet<Aresta>();
 		Aresta arestaNavegantesItajai = new Aresta(Navegantes, Itajai);
 		arestasDigrafo.add(arestaNavegantesItajai);
@@ -495,13 +498,13 @@ public class DSLFGTeste {
 		arestasDigrafo.add(arestaItajaiBalneario);
 		Aresta arestaItajaiBrusque = new Aresta(Itajai, Brusque);
 		arestasDigrafo.add(arestaItajaiBrusque);
-		
+
 		Grafo digrafo = new Grafo("digrafoExemploUmDoLivro", verticesDigrafo, arestasDigrafo,"digrafo");
-		
-		
+
+
 		Grafo grafo = new Grafo("grafoExemploUmDoLivro", verticesDigrafo, arestasDigrafo,"grafo");
-		
-		
+
+
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("grafoExemploUmDoLivro", grafo);
 		novaListaDeDespejo.put("digrafoExemploUmDoLivro", digrafo);
@@ -519,13 +522,13 @@ public class DSLFGTeste {
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("vertice", vertice);
 		respostasParaTesteDeDespejo.put("exemplos\\funcoes\\funcaoObterVertice.dslfg", novaListaDeDespejo);
-		
+
 	}
 
 	private void adicionarTesteAlgoritmoFuncaoPercorrerGrafo() {
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		respostasParaTesteDeDespejo.put("exemplos\\funcoes\\funcaoPercorrerGrafo.dslfg", novaListaDeDespejo);
-		
+
 	}
 
 	private void adicionarTesteAlgoritmoComandoEnquantoComRetorno() {
@@ -568,10 +571,10 @@ public class DSLFGTeste {
 		Map<String, Objeto> novaListaDeDespejo = new HashMap<String, Objeto>();
 		novaListaDeDespejo.put("conjuntoPrincipal", conjuntoPrincipal);
 		novaListaDeDespejo.put("conjuntoRetirar", conjuntoRetirar);
-		
+
 		respostasParaTesteDeDespejo.put("exemplos\\funcoes\\despejar.dslfg", novaListaDeDespejo);
 	}
-	
+
 	private void adicionarTesteObterVerticesAdjacentes(){
 		Vertice itajai = new Vertice("Itajai");
 		Conjunto verticesAdjacentes = new Conjunto();
