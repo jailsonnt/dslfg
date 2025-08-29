@@ -86,3 +86,9 @@ tasks.test {
     dependsOn(tasks.named("generateTestGrammarSource"))
     classpath += files(generatedTestSourcesDir)
 }
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions {
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+    }
+}
