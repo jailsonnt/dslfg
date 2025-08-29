@@ -3,7 +3,7 @@ plugins {
     kotlin("jvm") version "2.2.10"
     antlr
     application
-    id ("io.gitlab.arturbosch.detekt") version "1.23.8"
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
 }
 
 repositories {
@@ -26,7 +26,12 @@ dependencies {
     implementation("commons-io:commons-io:2.20.0")
     implementation("org.apache.commons:commons-lang3:3.18.0")
     implementation(files("lib/rsyntaxtextarea-2.0.4.1.jar"))
-    testImplementation("junit:junit:4.13.2")
+
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 java {
@@ -40,7 +45,7 @@ application {
 }
 
 tasks.test {
-    useJUnit()
+    useJUnitPlatform()
     failOnNoDiscoveredTests = false
 }
 
@@ -77,4 +82,10 @@ tasks.named("compileTestKotlin") {
 tasks.test {
     dependsOn(tasks.named("generateTestGrammarSource"))
     classpath += files(generatedTestSourcesDir)
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions {
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+    }
 }

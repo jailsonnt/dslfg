@@ -12,7 +12,7 @@ public class Booleano implements Objeto {
 		this.valor = valor;
 	}
 	
-	public Boolean obterNUmero() {
+	public Boolean obterBooleano() {
 		return this.valor;
 	}
 	
