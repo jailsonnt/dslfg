@@ -8,30 +8,24 @@ plugins {
 
 repositories {
     mavenCentral()
+    maven { url = uri("https://repo.clojars.org/") }
 }
-
-buildscript {
-    repositories {
-        gradlePluginPortal()
-    }
-    dependencies {
-        classpath("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.8")
-    }
-}
-
-apply(plugin = "io.gitlab.arturbosch.detekt")
 
 dependencies {
-    implementation("org.antlr:antlr4:4.1")
     implementation("commons-io:commons-io:2.20.0")
     implementation("org.apache.commons:commons-lang3:3.18.0")
-    implementation(files("lib/rsyntaxtextarea-2.0.4.1.jar"))
+    implementation("org.fife.ui:rsyntaxtextarea:2.0.4.1")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
+    testImplementation(platform("org.junit:junit-bom:5.13.4"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.mockito:mockito-core:5.11.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    detekt("io.gitlab.arturbosch.detekt:detekt-cli:1.23.8")
+    detekt("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.8")
+
+    antlr("org.antlr:antlr4:4.1")
 }
 
 java {
@@ -44,44 +38,27 @@ application {
     mainClass.set("jailsonnt.tcc.dslfg.DSLFGGrafico")
 }
 
+detekt {
+    autoCorrect = true
+}
+
 tasks.test {
     useJUnitPlatform()
-    failOnNoDiscoveredTests = false
 }
-
-val generatedSourcesDir = layout.buildDirectory.dir("generated-src/antlr/main").get()
-val generatedTestSourcesDir = layout.buildDirectory.dir("generated-src/antlr/test").get()
 
 tasks.generateGrammarSource {
-    maxHeapSize = "64m"
     arguments = arguments + listOf(
-        "-visitor",
-        "-package", "jailsonnt.tcc.dslfg.antlr",
-        "-lib", "src/main/antlr/jailsonnt/tcc/dslfg/antlr"
+        "-package", "jailsonnt.tcc.dslfg.interpretacao.gramatica",
+        "-lib", "src/main/antlr/jailsonnt/tcc/dslfg/interpretacao/gramatica",
     )
-    outputDirectory = file("${generatedSourcesDir}/jailsonnt/tcc/dslfg/antlr")
 }
 
-sourceSets {
-    main {
-        java {
-            srcDirs("src/main/java", generatedSourcesDir)
-        }
-    }
-    test {
-        java {
-            srcDirs("src/test/java", generatedTestSourcesDir)
-        }
-    }
+tasks.compileKotlin {
+    dependsOn(tasks.generateGrammarSource)
 }
 
-tasks.named("compileTestKotlin") {
-    dependsOn(tasks.named("generateTestGrammarSource"))
-}
-
-tasks.test {
-    dependsOn(tasks.named("generateTestGrammarSource"))
-    classpath += files(generatedTestSourcesDir)
+tasks.compileTestKotlin {
+    dependsOn(tasks.generateTestGrammarSource)
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
